@@ -3,6 +3,7 @@ from unittest import TestCase
 from purifier import purify_text
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import pearsonr
 
 STR1 = "Говно, залупа, пенис, хер, давалка, хуй, блядина, Головка, шлюха, жопа, член, еблан, петух, мудила, Рукоблуд," \
        " ссанина, очко, блядун, вагина, Сука, ебланище, влагалище, пердун, дрочила Пидор, пизда, туз, малафья, гомик," \
@@ -17,12 +18,13 @@ STR4 = "тут не должно быть звездочек"
 PURIFIED_STR4 = STR4
 
 SCALE = 100
+length_list = []
 time_list = []
 
 
 class TestTextPolicy(TestCase):
     def check(self, str1, str2):
-        self.assertEqual(str1, purify_text(str2, time_list))
+        self.assertEqual(str1, purify_text(str2, length_list, time_list))
 
     def test1(self):
         self.check(PURIFIED_STR1, STR1)
@@ -37,13 +39,13 @@ class TestTextPolicy(TestCase):
         self.check(PURIFIED_STR4, STR4)
 
     def test5(self):
-        xs = [1, 2, 1]
-        ys = [2, 3, 1]
-        plt.title('Lines')
-        plt.xlabel('X')
-        plt.ylabel('Y')
-        plt.plot(xs, ys)
-        plt.show()
+        plt.title("Length/time scaatter plot of purify_text execution")
+        plt.xlabel("Length")
+        plt.ylabel("Time")
+        for index in range(len(length_list)):
+            plt.scatter(length_list[index], time_list[index], c='blue')
+        # plt.show()
+        plt.savefig("correlation.png")
         # plt.hist(time_list, bins=[(float(i) / SCALE) for i in range(0, SCALE)])
         # plt.show()
 
