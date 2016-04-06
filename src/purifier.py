@@ -1,12 +1,9 @@
 # coding=utf-8
 import collections
 import re
-import pymorphy2
-import cProfile
-import StringIO
-import pstats
 import time
-from guppy import hpy
+
+import pymorphy2
 
 
 def words(text): return text.lower().decode('utf-8').splitlines()
@@ -58,37 +55,12 @@ def purify_text(text, length_list, time_list):
     for word in re.split('[., ]+', text):
         if (word != None and word != u''):
             prev_time = time.time()
-            # length_list.append(len(word))
             normal_word = normal_form(word)
             curse_word = correct(normal_word)
             # print word + " " + normal_word + " " + curse_word
-            if (NWORDS[curse_word] > 0 and (word == curse_word or word.lower() == curse_word or normal_word == curse_word)):
+            if (NWORDS[curse_word] > 0 and (
+                        word == curse_word or word.lower() == curse_word or normal_word == curse_word)):
                 text = text.replace(word, u'*')
             length_list.append(len(word))
             time_list.append(float(time.time() - prev_time))
     return text.encode('utf-8')
-
-
-def test_oxxxy():
-    pr = cProfile.Profile()
-    pr.enable()
-    run_oxxxy()
-    pr.disable()
-    s = StringIO.StringIO()
-    sortby = 'cumulative'
-    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    ps.print_stats()
-    print s.getvalue()
-
-
-h = hpy()
-
-if __name__ == '__main__':
-    print purify_text("В каменном веке блять живем. Пол дня потратил чтоб копию сраной бумажки отвезти в горводоканал. Там ни оригинал не спросили ни паспорт, никаких документов вообще. Тупо с копии забили в систему данные и все. Два килобайта информации вез по холоду через пол города на ебаном папирусе. 21 век блять.", [], [])
-    # test_oxxxy()
-    # length_list = [0, 1, 2, 2]
-    # plt.hist(length_list, bins=[i for i in range(0, 15)])
-    # plt.show()
-    # print h.heap()
-    # ptasd
-    # run_oxxxy()

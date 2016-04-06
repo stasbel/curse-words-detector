@@ -1,14 +1,16 @@
 # coding=utf-8
-import unittest
-from purifier import purify_text
-import matplotlib.pyplot as plt
+import StringIO
+import cProfile
 import os
 import os.path
-import cProfile
-import StringIO
 import pstats
+import unittest
+
+import matplotlib.pyplot as plt
 import numpy as np
 from guppy import hpy
+
+from purifier import purify_text
 
 path, dirs, files = os.walk("./tests").next()
 NUMBER_OF_TESTS = len(files)
@@ -30,40 +32,67 @@ class TestPurifyText(unittest.TestCase):
     pass
 
 
-if __name__ == '__main__':
+def make_tests():
     for index in range(NUMBER_OF_TESTS):
         with open("./tests/TEST" + str(index)) as file:
             str1 = file.readline()
             str2 = file.readline()
             tests.append((str2, str1))
 
-    pr = cProfile.Profile()
-    pr.enable()
 
+def test():
     print "TESTS\n"
-
     unittest.main(exit=False)
 
-    print "\nCPU PROFILING\n"
 
+pr = cProfile.Profile()
+
+
+def enable_cpu_profiling():
+    pr.enable()
+
+
+def disable_cpu_profiling_and_print():
+    print "\nCPU PROFILING\n"
     pr.disable()
     s = StringIO.StringIO()
-    sort_by = 'cumulative'
-    ps = pstats.Stats(pr, stream=s).sort_stats(sort_by)
+    sortby = 'cumulative'
+    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
     ps.print_stats()
     print s.getvalue()
 
-    print "\nHEAP PROFILING\n"
 
+def heap_profiling():
+    print "\nHEAP PROFILING\n"
     print hpy().heap()
 
+
+def plot():
     plt.title("Length/time scatter plot of purify_text execution")
     plt.xlabel("Length")
     plt.ylabel("Time")
-    for index in range(len(length_list)):
-        plt.scatter(length_list[index], time_list[index], c='yellow')
+    for i in range(len(length_list)):
+        plt.scatter(length_list[i], time_list[i], c='yellow')
     # plt.show()
     plt.savefig("correlation.png")
 
+
+def average():
     average = np.average(length_list) / np.average(time_list)
     print "\nAVERAGE SPEED: " + str(average) + " symbols per second"
+
+
+if __name__ == '__main__':
+    make_tests()
+
+    enable_cpu_profiling()
+
+    test()
+
+    disable_cpu_profiling_and_print()
+
+    heap_profiling()
+
+    plot()
+
+    average()
