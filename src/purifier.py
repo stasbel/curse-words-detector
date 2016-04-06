@@ -62,8 +62,7 @@ def purify_text(text, length_list, time_list):
             normal_word = normal_form(word)
             curse_word = correct(normal_word)
             # print word + " " + normal_word + " " + curse_word
-            if (NWORDS[curse_word] > 0 and (
-                                word == curse_word or word.lower() == curse_word or normal_word == curse_word)):
+            if (NWORDS[curse_word] > 0 and (word == curse_word or word.lower() == curse_word or normal_word == curse_word)):
                 text = text.replace(word, u'*')
             length_list.append(len(word))
             time_list.append(float(time.time() - prev_time))
@@ -85,7 +84,7 @@ def test_oxxxy():
 h = hpy()
 
 if __name__ == '__main__':
-    print purify_text("h")
+    print purify_text("ах ты сука, пизда ёбаная", [], [])
     # test_oxxxy()
     # length_list = [0, 1, 2, 2]
     # plt.hist(length_list, bins=[i for i in range(0, 15)])
