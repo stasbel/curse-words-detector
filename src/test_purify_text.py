@@ -7,6 +7,7 @@ import os.path
 import cProfile
 import StringIO
 import pstats
+import numpy as np
 from guppy import hpy
 
 path, dirs, files = os.walk("./tests").next()
@@ -63,3 +64,6 @@ if __name__ == '__main__':
         plt.scatter(length_list[index], time_list[index], c='yellow')
     # plt.show()
     plt.savefig("correlation.png")
+
+    average = np.average(length_list) / np.average(time_list)
+    print "\nAVERAGE SPEED: " + str(average) + " symbols per second"
