@@ -67,14 +67,22 @@ def heap_profiling():
     print hpy().heap()
 
 
-def plot():
+def plots():
+    plt.figure(0)
     plt.title("Length/time scatter plot of purify_text execution")
     plt.xlabel("Length")
     plt.ylabel("Time")
     for i in range(len(length_list)):
         plt.scatter(length_list[i], time_list[i], c='yellow')
     # plt.show()
-    plt.savefig("correlation.png")
+    plt.savefig("length_time_plot.png")
+
+    plt.figure(1)
+    plt.title("Length/number hist of purify_text execution")
+    plt.xlabel("Length")
+    plt.ylabel("Number")
+    plt.hist(length_list, bins=np.arange(0, 15 + 1, 1), color='green')
+    plt.savefig("length_number_plot.png")
 
 
 def average():
@@ -93,6 +101,6 @@ if __name__ == '__main__':
 
     heap_profiling()
 
-    plot()
+    plots()
 
     average()
