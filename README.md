@@ -8,7 +8,8 @@ empty
 * Тесты
 * Профиллирование работы
 
-![Граффик](src/correlation.png "Граффик")
+![Граффик](src/length_time_plot.png "Граффик")
+![Граффик](src/length_number_plot.png "Граффик")
 
 
 
