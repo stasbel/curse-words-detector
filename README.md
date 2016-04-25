@@ -6,8 +6,9 @@
 * Тесты
 * Профиллирование работы
 
-![Граффик](src/length_time_plot.png "Граффик")
-![Граффик](src/length_number_plot.png "Граффик")
+![Граффик](src/test/resources/plots/length_time_plot.png "Граффик")
+![Граффик](src/test/resources/plots/length_number_plot.png "Граффик")
+
 
 
 
