@@ -9,6 +9,7 @@
 Сейчас (27.04.16):
 
 * Идея с mystem провалилась: слишком медленно
+* Скрыть commit'ы словарей матов и тестов (какое-нибудь простое кодирование?)
 
 ![Граффик](src/test/resources/plots/length_time_plot.png "Граффик")
 ![Граффик](src/test/resources/plots/length_number_plot.png "Граффик")
