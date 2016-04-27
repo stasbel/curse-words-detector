@@ -14,7 +14,7 @@ time_list = []
 
 def test_run():
     for file_name in os.listdir('../resources/tests'):
-        if fnmatch.fnmatch(file_name, 'test[1-2]*.txt'):
+        if fnmatch.fnmatch(file_name, 'test[0-2]*.txt'): # fix this to avoid some unnecessary tests
             yield assert_equals, file_name
 
 
