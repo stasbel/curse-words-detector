@@ -26,4 +26,5 @@ def assert_equals(test_name):
 
 
 if __name__ == '__main__':
-    print purify_text('ах ты сука, пизда ёбаная', length_list, time_list)
+    print normal_form('пизде')
+    # print purify_text('ах ты сука, пизда ёбаная', length_list, time_list)

@@ -3,9 +3,9 @@ import collections
 import re
 import time
 
-import pymorphy2
-
 from util import *
+# from pymorph_nf import normal_form
+from mystem_nf import normal_form
 
 
 def train(features):
@@ -16,6 +16,7 @@ def train(features):
 
 
 good_words = train(words(file(VANILLA_BAD_WORDS_PATH).read()))
+good_words_edits1 = train(words(file(EDITS1_BAD_WORDS_PATH).read()))
 
 
 def known_edits2(edits1_word):
@@ -35,14 +36,11 @@ def correct_obscene(word):
         return max(candidates, key=lambda w: good_words[w])
 
 
-morph = pymorphy2.MorphAnalyzer()
-
-
-def normal_form(word):
-    # word = word.decode('utf-8')
-    word = word.lower()
-    word = morph.parse(word)[0].normal_form
-    return word
+"""def correct_obscene2(word):
+    if word in good_words:
+        return word
+    else:
+        edits1_word ="""
 
 
 def purify_text(text, length_list, time_list):
