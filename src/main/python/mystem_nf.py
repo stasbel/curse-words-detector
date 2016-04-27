@@ -8,7 +8,7 @@ def normal_form(word):
     word = word.lower()
     result = subprocess.check_output('echo ' + word + ' | ../../main/python/mystem -nld', shell=True)
     result = re.split('[?|]+', result)[0]
-    return result
+    return result.decode('utf-8')
 
 
 if __name__ == '__main__':
