@@ -4,7 +4,7 @@ import re
 import time
 
 from util import *
-# from pymorph_nf import normal_form
+#from pymorph_nf import normal_form
 from mystem_nf import normal_form
 
 

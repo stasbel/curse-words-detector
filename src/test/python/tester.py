@@ -14,7 +14,7 @@ time_list = []
 
 def test_run():
     for file_name in os.listdir('../resources/tests'):
-        if fnmatch.fnmatch(file_name, 'test[0-2]*.txt'):
+        if fnmatch.fnmatch(file_name, 'test[1-2]*.txt'):
             yield assert_equals, file_name
 
 
@@ -26,5 +26,5 @@ def assert_equals(test_name):
 
 
 if __name__ == '__main__':
-    print normal_form('пизде')
-    # print purify_text('ах ты сука, пизда ёбаная', length_list, time_list)
+    # print normal_form('пизде')
+    print purify_text('ах ты сука, пизда ёбаная', length_list, time_list)
