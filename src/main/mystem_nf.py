@@ -12,4 +12,4 @@ def normal_form(word):
 
 
 if __name__ == '__main__':
-    print normal_form('говно залупа пенис')
+    print normal_form('ебожить')
