@@ -16,6 +16,9 @@ empty
 ![Граффик](src/test/resources/plots/length_time_plot.png "Граффик")
 ![Граффик](src/test/resources/plots/length_number_plot.png "Граффик")
 
+Текущая скорость распознавания: ~17 слов в секунду (плохо)
+Текущая точность распознавания: 100% (плохие тесты)
+
 
 
 
