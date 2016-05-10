@@ -1,74 +1,169 @@
-# coding=utf-8
 import collections
-import re
-import time
+from time import time
 
-import main.mystem_nf
-
-
-# TODO перейти на python3 из-за воен с кодировками
-
-def words(text):
-    return text.decode('utf-8').splitlines()
+import src.main.pymorph_nf
 
 
-def train(features):
-    model = collections.defaultdict(lambda: 0)
-    for word in features:
-        model[word] += 1
-    return model
+# TODO как улучшить? 1) использовать другую структуру данных
 
 
-def edits1(word, alphabet):
-    n = len(word)
-    return set([word[0:i] + word[i + 1:] for i in range(n)] +  # deletion
-               [word[0:i] + word[i + 1] + word[i] + word[i + 2:] for i in range(n - 1)] +  # transposition
-               [word[0:i] + c + word[i + 1:] for i in range(n) for c in alphabet] +  # alteration
-               [word[0:i] + c + word[i:] for i in range(n + 1) for c in alphabet])  # insertion
+class Purifier:
+    def __init__(self, path_to_dict=None, hide_symbol='*',
+                 normal_form=src.main.pymorph_nf.normal_form, is_in_dict=src.main.pymorph_nf.is_in_ruscorpra):
+        self.RUSSIAN_ALPHABET = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
+        self.bad_words = self.__train__(self.__words__(open(path_to_dict).read()))
+        self.hide_symbol = hide_symbol
+        self.normal_form = normal_form
+        self.is_in_dict = is_in_dict
 
+    @staticmethod
+    def __words__(text):
+        return text.splitlines()
 
-class Purifier():
-    def __init__(self, path_to_dict=None, normal_form=main.mystem_nf.normal_form):
-        self.RUSSIAN_ALPHABET_UTF8 = u'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
-        self.good_words = train(words(file(path_to_dict).read()));
-        self.normal_norm = normal_form
+    @staticmethod
+    def __train__(features):
+        model = collections.defaultdict(lambda: 0)
+        for word in features:
+            model[word] += 1
+        return model
 
-    def known_edits2(self, edits1_word, alphabet):
-        return set(e2 for e1 in edits1_word for e2 in edits1(e1, alphabet) if e2 in self.good_words)
+    @staticmethod
+    def __slices__(word, n):
+        return [[word[i:j] if i <= j else None for j in range(n + 1)] for i in range(n + 1)]
 
-    def known(self, words_list):
-        return set(w for w in words_list if w in self.good_words)
+    def __edits1__(self, word):
+        n = len(word)
+        slices = self.__slices__(word, n)
+        return set([slices[0][i] + slices[i + 1][n] for i in range(n)] +  # deletion
+                   [slices[0][i] + word[i + 1] + word[i] + slices[i + 2][n] for i in range(n - 1)] +  # transposition
+                   [slices[0][i] + c + slices[i + 1][n] for i in range(n) for c in
+                    self.RUSSIAN_ALPHABET] +  # alteration
+                   [slices[0][i] + c + slices[i][n] for i in range(n + 1) for c in self.RUSSIAN_ALPHABET])  # insertion
 
-    def correct_obscene(self, word):
-        if word in self.good_words:
-            return word
+    def __known_edits2__(self, edits1_word):
+        return set(e2 for e1 in edits1_word for e2 in self.__edits1__(e1) if e2 in self.bad_words)
+
+    def __known_bad__(self, words_list):
+        return set(w for w in words_list if w in self.bad_words)
+
+    class CorrectObsceneReturnValue(object):
+        """
+        :param word - curse word
+        :param edit_dist - edit distance from word to curse word, [0-2] for
+        in normal curse word, -1 for not a curse word
+        """
+
+        def __init__(self, word, edit_dist):
+            self.word = word
+            self.edit_dist = edit_dist
+
+    def __find_bad_max__(self, candidates):
+        if candidates:
+            return max(candidates, key=lambda w: self.bad_words[w])
         else:
-            edits1_word = edits1(word, self.RUSSIAN_ALPHABET_UTF8)
-            candidates = self.known(edits1_word) or self.known_edits2(edits1_word, self.RUSSIAN_ALPHABET_UTF8) or [word]
-            return max(candidates, key=lambda w: self.good_words[w])
+            return None
 
-    # TODO new version
-    """def correct_obscene2(word):
-        if word in good_words:
-            return word
+    def __find_good_any__(self, edits1):
+        for good_word in edits1:
+            if self.is_in_dict(good_word):
+                return good_word
+        return None
+
+    def __correct_obscene__(self, word):
+        # на расстоянии 1: ищу наилучший мат и любое хорошее слово
+        edits1_word = self.__edits1__(word)
+
+        bad_candidates1 = self.__known_bad__(edits1_word)
+        bad_candidate1 = self.__find_bad_max__(bad_candidates1)
+        if bad_candidate1:
+            return self.CorrectObsceneReturnValue(bad_candidate1, 1)
+
+        good_candidate = self.__find_good_any__(edits1_word)
+        if good_candidate:
+            return self.CorrectObsceneReturnValue(good_candidate, -1)
+
         else:
-            edits1_word ="""
+            # на расстоянии 2: ищу любой мат и любое хорошее слово
+            # или можно опять же искать лучший мат, тогда скорость упадет втрое
 
-    def purify_text(self, text, length_list=[], time_list=[]):
-        text = text.decode('utf-8')
-        for word in re.split('[., ]+', text):
-            if (word != None and word != ''):
-                prev_time = time.time()
-                normal_word = self.normal_norm(word)
-                curse_word = self.correct_obscene(normal_word)
-                if (self.good_words[curse_word] > 0 and
-                        (word == curse_word or word.lower() == curse_word or normal_word == curse_word)):
-                    text = text.replace(word, u'*')
+            bad_candidates2 = self.__known_edits2__(edits1_word)
+            candidate2 = self.__find_bad_max__(bad_candidates2)
+            if candidate2:
+                return self.CorrectObsceneReturnValue(candidate2, 2)
+
+            """for e1 in edits1_word:
+                for e2 in self.__edits1__(e1):
+                    if e2 in self.bad_words:
+                        print(e2)
+                        return self.CorrectObsceneReturnValue(e2, 2)
+                    if self.is_in_dict(e2):
+                        print(e2)
+                        return self.CorrectObsceneReturnValue(e2, -1)"""
+
+            return self.CorrectObsceneReturnValue(word, -1)
+
+    def __is_surely_obscene__(self, word):
+        return word in self.bad_words
+
+    def __is_surely_not_obscene__(self, word):
+        return word not in self.bad_words
+
+    is_a = lambda c: str.isalpha(c)
+    n_is_a = lambda c: not str.isalpha(c)
+
+    @staticmethod
+    def __tokenize__(text):
+        result = []
+        i = 0
+        n = len(text)
+        while i < n:
+            if str.isalpha(text[i]):
+                func = Purifier.is_a
+            else:
+                func = Purifier.n_is_a
+
+            j = i
+            while j < n and func(text[j]):
+                j += 1
+            result.append(text[i:j])
+            i = j
+
+        return result
+
+    def purify_text(self, text, length_list=None, time_list=None):
+        if length_list is None:
+            length_list = []
+        if time_list is None:
+            time_list = []
+        tokens = self.__tokenize__(text)
+        for ind, word in enumerate(tokens):
+            if str.isalpha(word[0]):
+                prev_time = time()
+
+                if self.__is_surely_obscene__(word):
+                    tokens[ind] = self.hide_symbol
+                else:
+                    normal = self.normal_form(word)
+                    if normal.is_in_dict:
+                        if self.__is_surely_obscene__(normal.word):
+                            tokens[ind] = self.hide_symbol
+                    else:
+                        curse = self.__correct_obscene__(normal.word)
+                        if (0 <= curse.edit_dist <= 1) or (curse.edit_dist == 2 and len(normal.word) >= 4):
+                            tokens[ind] = self.hide_symbol
+
                 length_list.append(len(word))
-                time_list.append(float(time.time() - prev_time))
-        return text.encode('utf-8')
+                time_list.append(float(time() - prev_time))
+        return ''.join(tokens)
 
 
 if __name__ == '__main__':
-    purifier = Purifier('../dicts/vanilla_bad_words.txt')
-    print purifier.purify_text('ах ты сука, пизда ёбаная')
+    purifier = Purifier('../../dicts/vanilla_bad_words.txt')
+    before_time = time()
+    print(purifier.purify_text('??ах, ты че, совсем ахуела, рмазь? прасто писдец, мда!!@ ебануться, ебожить с ноги))'))
+    # print(purifier.__edits1__('abc'))
+    # print(purifier.purify_text('нормальный текст без ошибак'))
+    # print(Purifier.__slices__('ебанутьсяься', 12))
+    # print(purifier.__correct_obscene__('че').word)
+    now_time = time()
+    print(now_time - before_time)
