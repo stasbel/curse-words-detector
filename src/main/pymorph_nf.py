@@ -1,16 +1,22 @@
-# coding=utf-8
-import pymorphy2
+from pymorphy2 import MorphAnalyzer
 
-morph = pymorphy2.MorphAnalyzer()
+morph = MorphAnalyzer()
+
+
+class NormalFormReturnValue(object):
+    def __init__(self, word, is_in_dict):
+        self.word = word
+        self.is_in_dict = is_in_dict
+
+
+def is_in_ruscorpra(word):
+    return morph.word_is_known(word)
 
 
 def normal_form(word):
-    # word = word.lower()
-    # word = word.decode('utf-8')
-    result = morph.parse(word)[0].normal_form
-    return result
+    result = morph.parse(word.lower())[0].normal_form
+    return NormalFormReturnValue(result, is_in_ruscorpra(result))
 
 
 if __name__ == '__main__':
-    print normal_form(u'блядями')
-
+    print(morph.parse('пизда'))
