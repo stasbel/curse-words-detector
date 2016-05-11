@@ -4,8 +4,9 @@ from time import time
 import src.main.pymorph_nf
 
 
-# TODO как улучшить? 1) использовать другую структуру данных
-
+# TODO как улучшить?
+# TODO 1) использовать другую структуру данных
+# TODO 2) частота употребления: ераном редко, ебаном чаще
 
 class Purifier:
     def __init__(self, path_to_dict=None, hide_symbol='*',
@@ -140,6 +141,8 @@ class Purifier:
             if str.isalpha(word[0]):
                 prev_time = time()
 
+                word = word.lower()
+
                 if self.__is_surely_obscene__(word):
                     tokens[ind] = self.hide_symbol
                 else:
@@ -160,7 +163,10 @@ class Purifier:
 if __name__ == '__main__':
     purifier = Purifier('../../dicts/vanilla_bad_words.txt')
     before_time = time()
-    print(purifier.purify_text('??ах, ты че, совсем ахуела, рмазь? прасто писдец, мда!!@ ебануться, ебожить с ноги))'))
+    # print(purifier.purify_text('??ах, ты че, совсем ахуела, рмазь? прасто писдец, мда!!@ ебануться, ебожить с ноги))'))
+    text = open('../test/resources/tests/t9.txt').read()
+    print(purifier.purify_text(text))
+    # print(purifier.purify_text('ебаном'))
     # print(purifier.__edits1__('abc'))
     # print(purifier.purify_text('нормальный текст без ошибак'))
     # print(Purifier.__slices__('ебанутьсяься', 12))
