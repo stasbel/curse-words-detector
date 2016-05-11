@@ -19,4 +19,5 @@ def normal_form(word):
 
 
 if __name__ == '__main__':
-    print(morph.parse('пизда'))
+    print(morph.parse('ераном'))
+    print(morph.parse('ераном')[0].methods_stack)
