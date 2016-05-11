@@ -3,6 +3,9 @@ import os
 import unittest
 from time import time
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 from src.main.purifier import Purifier
 
 
@@ -20,12 +23,33 @@ def test_generator(correct, suspect, purifier, length_list, time_list):
 
 TEST_DIR = '../resources/tests'
 DICT_PATH = '../../../dicts/vanilla_bad_words.txt'
+PLOT_PATH = '../resources/plots'
 
 
 def load_test(loader, tests, pattern):
     test_cases = unittest.TestSuite()
     test_cases.addTest(Tester())
     return test_cases
+
+
+def plots(lengths, times):
+    plt.figure(0)
+    plt.title("Length/time scatter plot of purify_text execution")
+    plt.xlabel("Length")
+    plt.ylabel("Time")
+    plt.scatter(lengths, times, c='red')
+
+    plt.plot(lengths, np.poly1d(np.polyfit(lengths, times, 1))(lengths))
+
+    # plt.show()
+    plt.savefig(PLOT_PATH + '/' + 'length_time_plot.png', bbox_inches='tight')
+
+    """plt.figure(1)
+    plt.title("Length/number hist of purify_text execution")
+    plt.xlabel("Length")
+    plt.ylabel("Number")
+    plt.hist(length_list, bins=np.arange(0, 15 + 1, 1), color='green')
+    plt.savefig("../resources/plots/length_number_plot.png")"""
 
 
 if __name__ == '__main__':
@@ -49,5 +73,7 @@ if __name__ == '__main__':
 
     now_time = time()
 
-    print(now_time - before_time)
-    print(len(time_list) / (now_time - before_time))
+    plots(length_list, time_list)
+
+    # print(now_time - before_time)
+    # print(len(time_list) / (now_time - before_time))
