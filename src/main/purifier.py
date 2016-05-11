@@ -29,17 +29,16 @@ class Purifier:
         return model
 
     @staticmethod
-    def __slices__(word, n):
-        return [[word[i:j] if i <= j else None for j in range(n + 1)] for i in range(n + 1)]
+    def __slices__(word):
+        return [(word[:i], word[i:]) for i in range(len(word) + 1)]
 
     def __edits1__(self, word):
-        n = len(word)
-        slices = self.__slices__(word, n)
-        return set([slices[0][i] + slices[i + 1][n] for i in range(n)] +  # deletion
-                   [slices[0][i] + word[i + 1] + word[i] + slices[i + 2][n] for i in range(n - 1)] +  # transposition
-                   [slices[0][i] + c + slices[i + 1][n] for i in range(n) for c in
-                    self.RUSSIAN_ALPHABET] +  # alteration
-                   [slices[0][i] + c + slices[i][n] for i in range(n + 1) for c in self.RUSSIAN_ALPHABET])  # insertion
+        slices = self.__slices__(word)
+        deletes = [a + b[1:] for a, b in slices if b]
+        transposes = [a + b[1] + b[0] + b[2:] for a, b in slices if len(b) > 1]
+        replaces = [a + c + b[1:] for a, b in slices for c in self.RUSSIAN_ALPHABET if b]
+        inserts = [a + c + b for a, b in slices for c in self.RUSSIAN_ALPHABET]
+        return set(deletes + transposes + replaces + inserts)
 
     def __known_edits2__(self, edits1_word):
         return set(e2 for e1 in edits1_word for e2 in self.__edits1__(e1) if e2 in self.bad_words)
@@ -163,9 +162,9 @@ class Purifier:
 if __name__ == '__main__':
     purifier = Purifier('../../dicts/vanilla_bad_words.txt')
     before_time = time()
-    # print(purifier.purify_text('??ах, ты че, совсем ахуела, рмазь? прасто писдец, мда!!@ ебануться, ебожить с ноги))'))
-    text = open('../test/resources/tests/t9.txt').read()
-    print(purifier.purify_text(text))
+    print(purifier.purify_text('??ах, ты че, совсем ахуела, рмазь? прасто писдец, мда!!@ ебануться, ебожить с ноги))'))
+    # text = open('../test/resources/tests/t9.txt').read()
+    # print(purifier.purify_text(text))
     # print(purifier.purify_text('ебаном'))
     # print(purifier.__edits1__('abc'))
     # print(purifier.purify_text('нормальный текст без ошибак'))
