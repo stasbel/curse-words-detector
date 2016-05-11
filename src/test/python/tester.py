@@ -5,6 +5,7 @@ from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
+from pympler import tracker
 
 from src.main.purifier import Purifier
 
@@ -69,9 +70,13 @@ if __name__ == '__main__':
 
     before_time = time()
 
+    tr = tracker.SummaryTracker()
+
     unittest.main(exit=False)
 
     now_time = time()
+
+    tr.print_diff()
 
     plots(length_list, time_list)
 
