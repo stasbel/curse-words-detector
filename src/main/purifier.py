@@ -24,12 +24,16 @@ class Purifier:
     def __init__(self, path_to_dict=None, hide_symbol='*',
                  normal_form=src.main.pymorph_nf.normal_form, is_in_dict=src.main.pymorph_nf.is_in_ruscorpra,
                  alphabet=RUSSIAN_ALPHABET, alphabet_set=RUSSIAN_ALPHABET_SET, replaces=REPLACES, max_word_len=15):
-        self.alphabet = alphabet
-        self.alphabet_set = alphabet_set
+
+        if not path_to_dict:
+            raise AttributeError
+
         self.bad_words = self.__train__(self.__words__(open(path_to_dict).read()))
         self.hide_string = hide_symbol
         self.normal_form = normal_form
         self.is_in_dict = is_in_dict
+        self.alphabet = alphabet
+        self.alphabet_set = alphabet_set
         self.replaces = replaces
         self.max_word_len = max_word_len
 
@@ -53,6 +57,7 @@ class Purifier:
         n = len(slices)
         deletes = [slices[i][0] + slices[i + 1][1] for i in range(n - 1)]
         transposes = [slices[i][0] + slices[i][1][1] + slices[i][1][0] + slices[i + 2][1] for i in range(n - 2)]
+        # старый вариант с поиском всех
         # replaces = [slices[i][0] + c + slices[i + 1][1] for i in range(n - 1) for c in self.alphabet]
         replaces = [slices[i][0] + c + slices[i + 1][1] for i in range(n - 1)
                     if slices[i][1][0] in self.alphabet_set for c in self.replaces[slices[i][1][0]]]
@@ -193,14 +198,5 @@ if __name__ == '__main__':
     purifier = Purifier('../../dicts/vanilla_bad_words.txt')
     before_time = time()
     print(purifier.purify_text('??ах, ты че, совсем ахуела,рмазь? прасто писдец,мда!!@ ебануться, ебожить с ноги))'))
-    # purifier.__edits1__('удаления')
-    # text = open('../test/resources/tests/t9.txt').read()
-    # print(purifier.purify_text(text))
-    # print(purifier.purify_text('ебаном'))
-    # print(purifier.__edits1__('abc'))
-    # print(purifier.purify_text('нормальный текст без ошибак'))
-    # print(Purifier.__slices__('ебанутьсяься', 12))
-    # print(purifier.__correct_obscene__('че').word)
-    # print(purifier.purify_text('вэжэвания'))
     now_time = time()
     print(now_time - before_time)
