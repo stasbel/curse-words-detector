@@ -1,7 +1,7 @@
 import collections
 from time import time
 
-import src.main.pymorph_nf
+from src.main.pymorph_nf import Parser
 
 # TODO как улучшить?
 # TODO 1) использовать другую структуру данных
@@ -9,7 +9,7 @@ import src.main.pymorph_nf
 
 RUSSIAN_ALPHABET = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
 RUSSIAN_ALPHABET_SET = set(RUSSIAN_ALPHABET)
-REPLACES = {  # рядом по клавиауре, похоже пишутся, парные, частые ошибки
+REPLACES = {  # рядом по клавиатуре, похоже пишутся, парные, похоже слышатся, частые ошибки
     'а': 'увсмпек' + 'оя', 'б': 'ьолдю' + 'пвг', 'в': 'ычсакуц' + 'фбо', 'г': 'нролш' + 'пкч', 'д': 'лшщзжюб' + 'тр',
     'е': 'капрн' + 'эёяои', 'ё': 'эхъ' + 'еоая', 'ж': 'щдюэхз' + 'шч', 'з': 'щджэх' + 'сц', 'и': 'мапрт' + 'еэ',
     'й': 'фыц' + 'иёъ', 'к': 'увапе' + 'гдб', 'л': 'огшщдбь' + 'у', 'м': 'свапи' + 'нйж', 'н': 'епрог' + 'мий',
@@ -22,16 +22,24 @@ REPLACES = {  # рядом по клавиауре, похоже пишутся,
 
 class Purifier:
     def __init__(self, path_to_dict=None, hide_symbol='*',
-                 normal_form=src.main.pymorph_nf.normal_form, is_in_dict=src.main.pymorph_nf.is_in_ruscorpra,
+                 is_in_dict=None, normal_form=None,
                  alphabet=RUSSIAN_ALPHABET, alphabet_set=RUSSIAN_ALPHABET_SET, replaces=REPLACES, max_word_len=15):
 
         if not path_to_dict:
             raise AttributeError
-
         self.bad_words = self.__train__(self.__words__(open(path_to_dict).read()))
+
         self.hide_string = hide_symbol
-        self.normal_form = normal_form
-        self.is_in_dict = is_in_dict
+
+        if (not is_in_dict) or (not normal_form):
+            parser = Parser()
+
+            if not is_in_dict:
+                self.is_in_dict = parser.is_in_ruscorpra
+
+            if not normal_form:
+                self.normal_form = parser.normal_form
+
         self.alphabet = alphabet
         self.alphabet_set = alphabet_set
         self.replaces = replaces
@@ -161,6 +169,7 @@ class Purifier:
             length_list = []
         if time_list is None:
             time_list = []
+
         tokens = self.__tokenize__(text)
         for ind, word in enumerate(tokens):
             if str.isalpha(word[0]) and len(word) <= self.max_word_len:
@@ -172,7 +181,8 @@ class Purifier:
                     tokens[ind] = self.hide_string
                 else:
                     normal = self.normal_form(word)
-                    if normal.is_in_dict:
+                    if self.is_in_dict(normal.candidates[0]):
+                        # если в словаре, то проверяем что нормальные формы не маты
                         for normal_word in normal.candidates:
                             if self.__is_surely_obscene__(normal_word):
                                 tokens[ind] = self.hide_string
