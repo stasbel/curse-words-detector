@@ -70,13 +70,13 @@ if __name__ == '__main__':
 
     before_time = time()
 
-    tr = tracker.SummaryTracker()
+    # tr = tracker.SummaryTracker()
 
     unittest.main(exit=False)
 
     now_time = time()
 
-    tr.print_diff()
+    # tr.print_diff()
 
     plots(length_list, time_list)
 

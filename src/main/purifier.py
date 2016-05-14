@@ -3,19 +3,35 @@ from time import time
 
 import src.main.pymorph_nf
 
-
 # TODO как улучшить?
 # TODO 1) использовать другую структуру данных
 # TODO 2) частота употребления: ераном редко, ебаном чаще
 
+RUSSIAN_ALPHABET = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
+RUSSIAN_ALPHABET_SET = set(RUSSIAN_ALPHABET)
+REPLACES = {  # рядом по клавиауре, похоже пишутся, парные, частые ошибки
+    'а': 'увсмпек' + 'оя', 'б': 'ьолдю' + 'пвг', 'в': 'ычсакуц' + 'фбо', 'г': 'нролш' + 'пкч', 'д': 'лшщзжюб' + 'тр',
+    'е': 'капрн' + 'эёяои', 'ё': 'эхъ' + 'еоая', 'ж': 'щдюэхз' + 'шч', 'з': 'щджэх' + 'сц', 'и': 'мапрт' + 'еэ',
+    'й': 'фыц' + 'иёъ', 'к': 'увапе' + 'гдб', 'л': 'огшщдбь' + 'у', 'м': 'свапи' + 'нйж', 'н': 'епрог' + 'мий',
+    'о': 'рнгшльт' + 'ёеаэ', 'п': 'акенрим' + 'б', 'р': 'пенготи' + 'сду', 'с': 'чывам' + 'зж', 'т': 'ипроь' + 'дкг',
+    'у': 'цывак' + 'дею', 'ф': 'ячыцй' + 'вшщ', 'х': 'зжэёъ' + 'шч', 'ц': 'йфыву' + 'чшщ', 'ч': 'яфывс' + 'цшщж',
+    'ш': 'голдщ' + 'жзчц', 'щ': 'шлджз' + 'чц', 'ъ': 'хэё' + 'ьбы', 'ы': 'йфячвуц' + 'ъьэ', 'ь': 'тролб' + 'ъы',
+    'э': 'жзхъё' + 'яыюе', 'ю': 'блдж' + 'еяыэу', 'я': 'фыч' + 'аэе',
+}
+
+
 class Purifier:
     def __init__(self, path_to_dict=None, hide_symbol='*',
-                 normal_form=src.main.pymorph_nf.normal_form, is_in_dict=src.main.pymorph_nf.is_in_ruscorpra):
-        self.RUSSIAN_ALPHABET = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
+                 normal_form=src.main.pymorph_nf.normal_form, is_in_dict=src.main.pymorph_nf.is_in_ruscorpra,
+                 alphabet=RUSSIAN_ALPHABET, alphabet_set=RUSSIAN_ALPHABET_SET, replaces=REPLACES, max_word_len=15):
+        self.alphabet = alphabet
+        self.alphabet_set = alphabet_set
         self.bad_words = self.__train__(self.__words__(open(path_to_dict).read()))
-        self.hide_symbol = hide_symbol
+        self.hide_string = hide_symbol
         self.normal_form = normal_form
         self.is_in_dict = is_in_dict
+        self.replaces = replaces
+        self.max_word_len = max_word_len
 
     @staticmethod
     def __words__(text):
@@ -34,10 +50,13 @@ class Purifier:
 
     def __edits1__(self, word):
         slices = self.__slices__(word)
-        deletes = [a + b[1:] for a, b in slices if b]
-        transposes = [a + b[1] + b[0] + b[2:] for a, b in slices if len(b) > 1]
-        replaces = [a + c + b[1:] for a, b in slices for c in self.RUSSIAN_ALPHABET if b]
-        inserts = [a + c + b for a, b in slices for c in self.RUSSIAN_ALPHABET]
+        n = len(slices)
+        deletes = [slices[i][0] + slices[i + 1][1] for i in range(n - 1)]
+        transposes = [slices[i][0] + slices[i][1][1] + slices[i][1][0] + slices[i + 2][1] for i in range(n - 2)]
+        # replaces = [slices[i][0] + c + slices[i + 1][1] for i in range(n - 1) for c in self.alphabet]
+        replaces = [slices[i][0] + c + slices[i + 1][1] for i in range(n - 1)
+                    if slices[i][1][0] in self.alphabet_set for c in self.replaces[slices[i][1][0]]]
+        inserts = [slices[i][0] + c + slices[i][1] for i in range(n) for c in self.alphabet]
         return set(deletes + transposes + replaces + inserts)
 
     def __known_edits2__(self, edits1_word):
@@ -108,27 +127,29 @@ class Purifier:
     def __is_surely_not_obscene__(self, word):
         return word not in self.bad_words
 
-    is_a = lambda c: str.isalpha(c)
-    n_is_a = lambda c: not str.isalpha(c)
-
     @staticmethod
     def __tokenize__(text):
         result = []
         i = 0
         n = len(text)
         while i < n:
-            if str.isalpha(text[i]):
-                func = Purifier.is_a
-            else:
-                func = Purifier.n_is_a
-
             j = i
-            while j < n and func(text[j]):
-                j += 1
+
+            if str.isalpha(text[i]):
+                while j < n and (str.isalpha(text[j]) or str.isdigit(text[j])):
+                    j += 1
+            else:
+                while j < n and not str.isalpha(text[j]):
+                    j += 1
             result.append(text[i:j])
+
             i = j
 
         return result
+
+    @staticmethod
+    def __word_heuristic__(word):
+        return word.lower()
 
     def purify_text(self, text, length_list=None, time_list=None):
         if length_list is None:
@@ -137,32 +158,42 @@ class Purifier:
             time_list = []
         tokens = self.__tokenize__(text)
         for ind, word in enumerate(tokens):
-            if str.isalpha(word[0]):
+            if str.isalpha(word[0]) and len(word) <= self.max_word_len:
                 prev_time = time()
 
-                word = word.lower()
+                word = self.__word_heuristic__(word)
 
                 if self.__is_surely_obscene__(word):
-                    tokens[ind] = self.hide_symbol
+                    tokens[ind] = self.hide_string
                 else:
                     normal = self.normal_form(word)
                     if normal.is_in_dict:
-                        if self.__is_surely_obscene__(normal.word):
-                            tokens[ind] = self.hide_symbol
+                        for normal_word in normal.candidates:
+                            if self.__is_surely_obscene__(normal_word):
+                                tokens[ind] = self.hide_string
+                                break
                     else:
-                        curse = self.__correct_obscene__(normal.word)
-                        if (0 <= curse.edit_dist <= 1) or (curse.edit_dist == 2 and len(normal.word) >= 4):
-                            tokens[ind] = self.hide_symbol
+                        for normal_word in normal.candidates:
+                            curse = self.__correct_obscene__(normal_word)
+                            if (0 <= curse.edit_dist <= 1) or (curse.edit_dist == 2 and len(normal_word) >= 4):
+                                tokens[ind] = self.hide_string
+                                break
 
                 length_list.append(len(word))
-                time_list.append(float(time() - prev_time))
+                this_time = float(time() - prev_time)
+                time_list.append(this_time)
+
+                # if this_time >= 0.3:
+                #     print(word)
+
         return ''.join(tokens)
 
 
 if __name__ == '__main__':
     purifier = Purifier('../../dicts/vanilla_bad_words.txt')
     before_time = time()
-    print(purifier.purify_text('??ах, ты че, совсем ахуела, рмазь? прасто писдец, мда!!@ ебануться, ебожить с ноги))'))
+    print(purifier.purify_text('??ах, ты че, совсем ахуела,рмазь? прасто писдец,мда!!@ ебануться, ебожить с ноги))'))
+    # purifier.__edits1__('удаления')
     # text = open('../test/resources/tests/t9.txt').read()
     # print(purifier.purify_text(text))
     # print(purifier.purify_text('ебаном'))
@@ -170,5 +201,6 @@ if __name__ == '__main__':
     # print(purifier.purify_text('нормальный текст без ошибак'))
     # print(Purifier.__slices__('ебанутьсяься', 12))
     # print(purifier.__correct_obscene__('че').word)
+    # print(purifier.purify_text('вэжэвания'))
     now_time = time()
     print(now_time - before_time)
