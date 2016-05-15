@@ -1,10 +1,13 @@
+import cProfile
 import fnmatch
 import os
+import pstats
 import unittest
 from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
+from pympler import tracker
 
 from src.main.purifier import Purifier
 
@@ -23,7 +26,8 @@ def test_generator(correct, suspect, _purifier, _length_list, _time_list):
 
 TEST_DIR = '../resources/tests'
 DICT_PATH = '../../../dicts/vanilla_bad_words.txt'
-PLOT_PATH = '../resources/plots'
+PLOT1_PATH = '../resources/plots/length_time_plot.png'
+STAT_PATH = '../resources/stats/restats'
 
 
 def load_test():
@@ -42,7 +46,7 @@ def plots(lengths, times):
     plt.plot(lengths, np.poly1d(np.polyfit(lengths, times, 1))(lengths))
 
     # plt.show()
-    plt.savefig(PLOT_PATH + '/' + 'length_time_plot.png', bbox_inches='tight')
+    plt.savefig(PLOT1_PATH, bbox_inches='tight')
 
     """plt.figure(1)
     plt.title("Length/number hist of purify_text execution")
@@ -50,6 +54,21 @@ def plots(lengths, times):
     plt.ylabel("Number")
     plt.hist(length_list, bins=np.arange(0, 15 + 1, 1), color='green')
     plt.savefig("../resources/plots/length_number_plot.png")"""
+
+
+def run_with_time_profiling():
+    cProfile.run('unittest.main(exit=False)', STAT_PATH)
+    stats = pstats.Stats(STAT_PATH)
+    stats.sort_stats('cumulative').print_stats(20)
+    stats.print_callers(.5, 'purify_text')
+    stats.print_callers(.5, 'normal_form')
+    stats.print_callers(.5, 'correct_obscene')
+
+
+def run_with_memory_profiling():
+    tr = tracker.SummaryTracker()
+    unittest.main(exit=False)
+    tr.print_diff()
 
 
 if __name__ == '__main__':
@@ -69,11 +88,13 @@ if __name__ == '__main__':
 
     before_time = time()
 
-    unittest.main(exit=False)
+    # unittest.main(exit=False)
+    run_with_time_profiling()
+    # run_with_memory_profiling()
 
     now_time = time()
 
     plots(length_list, time_list)
 
     # print(now_time - before_time)
-    print(len(time_list) / (now_time - before_time))
+    # print('~' + str(len(time_list) / (now_time - before_time)) + ' words / sec')
