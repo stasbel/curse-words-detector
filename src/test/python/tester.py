@@ -59,9 +59,9 @@ if __name__ == '__main__':
 
     for file_name in os.listdir(TEST_DIR):
         if fnmatch.fnmatch(file_name, 't[0-9].txt'):
-            file = open(TEST_DIR + '/' + file_name)
+            file = open(TEST_DIR + '/' + file_name, 'r')
             str1 = file.read()
-            str2 = open(TEST_DIR + '/' + file_name.replace('.', 's.')).read()
+            str2 = open(TEST_DIR + '/' + file_name.replace('.', 's.'), 'r').read()
             test_name = 'test_' + file_name
             test = test_generator(str2, str1, purifier, length_list, time_list)
             test.__name__ = test_name
