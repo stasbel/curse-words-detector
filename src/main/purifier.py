@@ -3,7 +3,7 @@ from time import time
 from src.main.pymorph_nf import Analyzer
 
 # TODO как улучшить?
-# TODO 1) использовать другую структуру данных (hat-trie, 2x прирост)
+# TODO 1) использовать другую структуру данных
 # TODO 2) две вставки это много? (да вроде нет)
 # TODO 3) частота употребления: ераном редко, ебаном чаще, можно дать матам частоту и скачать словарь частотности
 # TODO совсем редкие слова можно пропускать
@@ -109,7 +109,7 @@ class Purifier:
         for i in range(n - 2):
             new_word = slices[i][0] + slices[i][1][1] + slices[i][1][0] + slices[i + 2][1]
             if fast_return_if_dict and self.is_dict(new_word):
-                return set(new_word)
+                return new_word
             result.add(new_word)
 
         # replaces
@@ -124,7 +124,7 @@ class Purifier:
                 for c in replace_list(slices[i][1][0]):
                     new_word = slices[i][0] + c + slices[i + 1][1]
                     if fast_return_if_dict and self.is_dict(new_word):
-                        return set(new_word)
+                        return new_word
                     result.add(new_word)
 
         # inserts
@@ -156,8 +156,8 @@ class Purifier:
             return self.CorrectObsceneReturnValue(self.edits1_dict[word], 1)
 
         edits1_word = self.__edits1__(word, fast_return_if_dict=True, clever_replaces=True)
-        if len(edits1_word) == 1:  # вернулись досрочно = единичное множетсво
-            return self.CorrectObsceneReturnValue(next(iter(edits1_word)), -1)
+        if isinstance(edits1_word, str):  # вернулись досрочно = просто строка
+            return self.CorrectObsceneReturnValue(edits1_word, -1)
 
         for e1 in edits1_word:
             if self.is_edit1(e1):  # тут тоже все ясно
