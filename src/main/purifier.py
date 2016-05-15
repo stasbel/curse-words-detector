@@ -46,7 +46,8 @@ class Purifier:
 
     def __init__(self, path_to_vanilla=None, hide_symbol='*',
                  is_dict=None, normal_form=None,
-                 alphabet=RUSSIAN_ALPHABET, replaces=REPLACES):
+                 alphabet=RUSSIAN_ALPHABET, replaces=REPLACES,
+                 bad_time=0.003):
         """
         :param path_to_vanilla: путь с словарю с плохими словами
         :param hide_symbol: на что заменяем плохое слово
@@ -54,6 +55,7 @@ class Purifier:
         :param normal_form: функция для поиска нормальных форм
         :param alphabet: алфавит
         :param replaces: словарь умных замен
+        :param bad_time: плохое время для анализа слова
         :return: новый класс
         """
 
@@ -79,6 +81,8 @@ class Purifier:
 
             if not normal_form:
                 self.normal_form = analyzer.normal_form
+
+        self.bad_time = bad_time
 
     @staticmethod
     def __slices__(word):
@@ -189,11 +193,13 @@ class Purifier:
     def __word_heuristic__(word):
         return word.lower()
 
-    def purify_text(self, text, length_list=None, time_list=None):
+    def purify_text(self, text, length_list=None, time_list=None, bottleneck_list=None):
         if length_list is None:
             length_list = []
         if time_list is None:
             time_list = []
+        if bottleneck_list is None:
+            bottleneck_list = []
 
         tokens = self.__tokenize__(text)
         for ind, word in enumerate(tokens):
@@ -221,6 +227,9 @@ class Purifier:
                 this_time = float(time() - prev_time)
                 time_list.append(this_time)
                 length_list.append(len(word))
+
+                if this_time >= self.bad_time:
+                    bottleneck_list.append(word)
 
         return ''.join(tokens)
 
