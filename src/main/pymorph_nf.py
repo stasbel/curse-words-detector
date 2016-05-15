@@ -1,7 +1,7 @@
 from pymorphy2 import MorphAnalyzer
 
 
-class Parser:
+class Analyzer:
     def __init__(self, min_accept_score=0.2):
         self.morph = MorphAnalyzer()
         self.min_accept_score = min_accept_score
@@ -25,7 +25,7 @@ class Parser:
 
 
 if __name__ == '__main__':
-    parser = Parser()
+    parser = Analyzer()
     name_word = 'вэжэвания'
     print(parser.normal_form(name_word).candidates)
     print(parser.is_in_ruscorpra(name_word))
