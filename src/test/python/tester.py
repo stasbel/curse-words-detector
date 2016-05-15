@@ -27,6 +27,7 @@ def test_generator(correct, suspect, _purifier, _length_list, _time_list):
 TEST_DIR = '../resources/tests'
 DICT_PATH = '../../../dicts/vanilla_bad_words.txt'
 PLOT1_PATH = '../resources/plots/length_time_plot.png'
+PLOT2_PATH = '../resources/plots/length_number_plot.png'
 STAT_PATH = '../resources/stats/restats'
 
 
@@ -42,18 +43,15 @@ def plots(lengths, times):
     plt.xlabel("Length")
     plt.ylabel("Time")
     plt.scatter(lengths, times, c='red')
-
     plt.plot(lengths, np.poly1d(np.polyfit(lengths, times, 1))(lengths))
-
-    # plt.show()
     plt.savefig(PLOT1_PATH, bbox_inches='tight')
 
-    """plt.figure(1)
+    plt.figure(1)
     plt.title("Length/number hist of purify_text execution")
     plt.xlabel("Length")
     plt.ylabel("Number")
     plt.hist(length_list, bins=np.arange(0, 15 + 1, 1), color='green')
-    plt.savefig("../resources/plots/length_number_plot.png")"""
+    plt.savefig(PLOT2_PATH)
 
 
 def run_with_time_profiling():
