@@ -5,7 +5,6 @@ from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-from pympler import tracker
 
 from src.main.purifier import Purifier
 
@@ -14,10 +13,10 @@ class Tester(unittest.TestCase):
     pass
 
 
-def test_generator(correct, suspect, purifier, length_list, time_list):
+def test_generator(correct, suspect, _purifier, _length_list, _time_list):
     def test_this(self):
         self.assertEqual(correct,
-                         purifier.purify_text(suspect, length_list, time_list))
+                         _purifier.purify_text(suspect, _length_list, _time_list))
 
     return test_this
 
@@ -27,7 +26,7 @@ DICT_PATH = '../../../dicts/vanilla_bad_words.txt'
 PLOT_PATH = '../resources/plots'
 
 
-def load_test(loader, tests, pattern):
+def load_test():
     test_cases = unittest.TestSuite()
     test_cases.addTest(Tester())
     return test_cases
@@ -70,15 +69,11 @@ if __name__ == '__main__':
 
     before_time = time()
 
-    # tr = tracker.SummaryTracker()
-
     unittest.main(exit=False)
 
     now_time = time()
 
-    # tr.print_diff()
-
     plots(length_list, time_list)
 
     # print(now_time - before_time)
-    # print(len(time_list) / (now_time - before_time))
+    print(len(time_list) / (now_time - before_time))
