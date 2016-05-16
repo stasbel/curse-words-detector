@@ -191,6 +191,7 @@ class Purifier:
 
     @staticmethod
     def __word_heuristic__(word):
+        # TODO замена цифр на буквы
         return word.lower()
 
     def purify_text(self, text, length_list=None, time_list=None, bottleneck_list=None):

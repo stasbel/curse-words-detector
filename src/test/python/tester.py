@@ -45,15 +45,21 @@ def plots(lengths, times):
     plt.ylabel("Time, sec")
     plt.scatter(lengths, times, marker='o', c='red', label='$word$', s=12)
     plt.legend(scatterpoints=1, loc="best")
+
     max_time = max(times)
     step = 0.0001
     plt.yticks([y for y in np.arange(0, max_time + step, step)], fontsize=6)
     plt.gca().set_ylim([0 - step, max_time + step])
+
+    max_length = max(lengths)
+    plt.xticks([x for x in range(max_length + 2)])
+
     average = math.ceil(len(lengths) / sum(times))
     plt.annotate('average speed: ' + str(average) + ' w/s', xy=(1.5, 0), xytext=(1, 0.001),
                  arrowprops=dict(facecolor='blue', shrink=0.05),
                  horizontalalignment='mid', verticalalignment='mid',
                  fontsize=7)
+
     plt.plot(lengths, np.poly1d(np.polyfit(lengths, times, 1))(lengths), linewidth=1.0)
     plt.savefig(PLOT1_PATH, bbox_inches='tight')
 
