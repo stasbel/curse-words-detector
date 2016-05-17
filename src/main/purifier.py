@@ -47,7 +47,7 @@ class Purifier:
     def __init__(self, path_to_vanilla=None, hide_symbol='*',
                  is_dict=None, normal_form=None,
                  alphabet=RUSSIAN_ALPHABET, replaces=REPLACES,
-                 bad_time=0.003):
+                 bad_time=0.002):
         """
         :param path_to_vanilla: путь с словарю с плохими словами
         :param hide_symbol: на что заменяем плохое слово

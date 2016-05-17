@@ -39,28 +39,43 @@ def load_test():
 
 
 def plots(lengths, times):
+    # main
     plt.figure(0)
     plt.title("Length/time scatter plot of purify_text execution")
     plt.xlabel("Length")
     plt.ylabel("Time, sec")
-    plt.scatter(lengths, times, marker='o', c='red', label='$word$', s=12)
-    plt.legend(scatterpoints=1, loc="best")
+    plt.scatter(lengths, times, marker='o', c='red', label='word', s=12)
 
+    # y ticks
     max_time = max(times)
     step = 0.0001
     plt.yticks([y for y in np.arange(0, max_time + step, step)], fontsize=6)
     plt.gca().set_ylim([0 - step, max_time + step])
 
+    # x ticks
     max_length = max(lengths)
-    plt.xticks([x for x in range(max_length + 2)])
+    plt.xticks([x for x in range(1, max_length + 2)])
 
+    # mean line
+    plt.plot([x for x in range(1, max_length + 2)], [0.002 for x in range(1, max_length + 2)],
+             c='green', label='fast', linestyle='--')
+
+    # old average
+    # plt.plot(lengths, np.poly1d(np.polyfit(lengths, times, 1))(lengths), linewidth=1.0)
+
+    # average line
+    ax, ay = zip(*sorted((x, np.mean([y for a, y in zip(lengths, times) if x == a])) for x in set(lengths)))
+    plt.plot(ax, ay, c='blue', label='average')
     average = math.ceil(len(lengths) / sum(times))
-    plt.annotate('average speed: ' + str(average) + ' w/s', xy=(1.5, 0), xytext=(1, 0.001),
+    plt.annotate('average speed: ' + str(average) + ' w/s', xy=(1.5, (ay[0] + ay[1]) / 2), xytext=(1, 0.001),
                  arrowprops=dict(facecolor='blue', shrink=0.05),
                  horizontalalignment='mid', verticalalignment='mid',
                  fontsize=7)
 
-    plt.plot(lengths, np.poly1d(np.polyfit(lengths, times, 1))(lengths), linewidth=1.0)
+    # legend
+    plt.legend(scatterpoints=1, loc="best")
+
+    # save
     plt.savefig(PLOT1_PATH, bbox_inches='tight')
 
     plt.figure(1)
@@ -115,6 +130,7 @@ if __name__ == '__main__':
     #    print(word)
 
     plots(length_list, time_list)
+    print(bottleneck_list)
 
     # print(now_time - before_time)
     # print('~' + str(len(time_list) / (now_time - before_time)) + ' words / sec')
