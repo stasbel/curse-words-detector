@@ -82,8 +82,9 @@ def plots(lengths, times):
     plt.title("Length/number hist of purify_text execution")
     plt.xlabel("Length")
     plt.ylabel("Number")
-    plt.hist(length_list, bins=np.arange(0, 15 + 1, 1), color='green')
-    plt.grid(True)
+    plt.hist(length_list, bins=np.arange(max_length + 1) - 0.5, color='green')
+    plt.xticks([x for x in range(max_length + 1)])
+    plt.xlim([0.5, max_length + 0.5])
     plt.savefig(PLOT2_PATH)
 
 
