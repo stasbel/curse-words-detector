@@ -1,6 +1,7 @@
 from time import time
 
 from src.main.pymorph_nf import Analyzer
+from src.test.python.statisticer import Statisticer
 
 # TODO как улучшить?
 # TODO 1) использовать другую структуру данных (память) есть DatTrie и CharTrie, HatTrie уже пробовал: медленней
@@ -53,7 +54,7 @@ class Purifier:
     def __init__(self, path_to_vanilla=None, hide_symbol='*',
                  is_dict=None, normal_form=None,
                  alphabet=RUSSIAN_ALPHABET, replaces=REPLACES,
-                 bad_time=0.002):
+                 statisticer=Statisticer()):
         """
         :param path_to_vanilla: путь с словарю с плохими словами
         :param hide_symbol: на что заменяем плохое слово
@@ -61,7 +62,6 @@ class Purifier:
         :param normal_form: функция для поиска нормальных форм
         :param alphabet: алфавит
         :param replaces: словарь умных замен
-        :param bad_time: плохое время для анализа слова
         :return: новый класс
         """
 
@@ -88,7 +88,7 @@ class Purifier:
             if not normal_form:
                 self.normal_form = analyzer.normal_form
 
-        self.bad_time = bad_time
+        self.statisticer = statisticer
 
     @staticmethod
     def __slices__(word):
@@ -200,14 +200,7 @@ class Purifier:
         # TODO замена цифр на буквы
         return word.lower()
 
-    def purify_text(self, text, length_list=None, time_list=None, bottleneck_list=None):
-        if length_list is None:
-            length_list = []
-        if time_list is None:
-            time_list = []
-        if bottleneck_list is None:
-            bottleneck_list = []
-
+    def purify_text(self, text):
         tokens = self.__tokenize__(text)
         for ind, word in enumerate(tokens):
             if str.isalpha(word[0]):
@@ -232,11 +225,11 @@ class Purifier:
                                 break
 
                 this_time = float(time() - prev_time)
-                time_list.append(this_time)
-                length_list.append(len(word))
+                self.statisticer.time_list.append(this_time)
+                self.statisticer.length_list.append(len(word))
 
-                if this_time >= self.bad_time:
-                    bottleneck_list.append(word)
+                if this_time >= self.statisticer.bad_time:
+                    self.statisticer.bottleneck_list.append(word)
 
         return ''.join(tokens)
 
