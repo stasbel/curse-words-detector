@@ -22,6 +22,7 @@ from src.test.python.statisticer import Statisticer
 # TODO 2) code style to more object-orient
 # TODO 3) node.js
 # TODO 4) code review
+# TODO 5) написать в readme подробней про алгоритм
 
 
 """
