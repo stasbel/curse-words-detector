@@ -17,6 +17,12 @@ from src.test.python.statisticer import Statisticer
 # TODO 8) анализировать по 2 по три слова, списки можно взять у opencorpora (точность)
 # TODO 9) добавить современных слов и имен собственных (точность и скорость)
 
+# TODO big tasks
+# TODO 1) ввести вероятности + максимально улучшить код
+# TODO 2) code style to more object-orient
+# TODO 3) node.js
+# TODO 4) code review
+
 
 """
 :const RUSSIAN_ALPHABET: русский алфавит
