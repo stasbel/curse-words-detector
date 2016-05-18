@@ -72,7 +72,7 @@ def plots(_length_list, _time_list):
     plt.plot([x for x in range(1, max_length + 2)], [0.002] * (max_length + 1),
              c='green', label='fast', linestyle='--')
 
-    # old average
+    # old average line
     # plt.plot(lengths, np.poly1d(np.polyfit(lengths, times, 1))(lengths), linewidth=1.0)
 
     # average line
@@ -91,6 +91,7 @@ def plots(_length_list, _time_list):
     # save
     plt.savefig(PLOT1_PATH, bbox_inches='tight')
 
+    # length hist
     plt.figure(1)
     plt.title("Length/number hist of purify_text execution")
     plt.xlabel("Length")
@@ -131,5 +132,4 @@ if __name__ == '__main__':
     # statistic
     statisticer = purifier.statisticer
     plots(statisticer.length_list, statisticer.time_list)
-    print(statisticer.bottleneck_list)
-    print(str(statisticer.get_average()) + ' w/s')
+    statisticer.print_full_information()

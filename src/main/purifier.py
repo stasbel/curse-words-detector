@@ -163,11 +163,15 @@ class Purifier:
             return self.CorrectObsceneReturnValue(word, -1)
 
         if self.is_edit1(word):  # тут все понятно
+            self.statisticer.edit1_list.append(word)
             return self.CorrectObsceneReturnValue(self.edits1_dict[word], 1)
 
         edits1_word = self.__edits1__(word, fast_return_if_dict=True, clever_replaces=True)
         if isinstance(edits1_word, str):  # вернулись досрочно = просто строка
+            self.statisticer.edit1_list.append(word)
             return self.CorrectObsceneReturnValue(edits1_word, -1)
+
+        self.statisticer.edit2_list.append(word)
 
         for e1 in edits1_word:
             if self.is_edit1(e1):  # тут тоже все ясно
@@ -227,7 +231,9 @@ class Purifier:
                 this_time = float(time() - prev_time)
                 self.statisticer.time_list.append(this_time)
                 self.statisticer.length_list.append(len(word))
-
+                self.statisticer.count += 1
+                if tokens[ind] == self.hide_string:
+                    self.statisticer.bad_count += 1
                 if this_time >= self.statisticer.bad_time:
                     self.statisticer.bottleneck_list.append(word)
 
