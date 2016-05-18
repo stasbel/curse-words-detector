@@ -63,6 +63,7 @@ class Purifier:
         :param normal_form: функция для поиска нормальных форм
         :param alphabet: алфавит
         :param replaces: словарь умных замен
+        :param statisticer: класс для сбора статистики
         :return: новый класс
         """
 
