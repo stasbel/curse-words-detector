@@ -201,7 +201,7 @@ class Purifier:
 
     @staticmethod
     def __word_heuristic__(word):
-        # TODO замена цифр на буквы
+        # TODO замена цифр и английских букв на русские буквы евристически
         return word.lower()
 
     def purify_text(self, text):
