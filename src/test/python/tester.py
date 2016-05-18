@@ -1,6 +1,5 @@
 import cProfile
 import fnmatch
-import math
 import os
 import pstats
 import unittest
@@ -50,26 +49,26 @@ def set_tests(_purifier):
             setattr(Tester, test.__name__, test)
 
 
-def plots(_length_list, _time_list):
+def plots(_statisticer):
     # main
     plt.figure(0)
     plt.title("Length/time scatter plot of purify_text execution")
     plt.xlabel("Length")
     plt.ylabel("Time, sec")
-    plt.scatter(_length_list, _time_list, marker='o', c='red', label='word', s=12)
+    plt.scatter(_statisticer.length_list, _statisticer.time_list, marker='o', c='red', label='word', s=12)
 
     # y ticks
-    max_time = max(_time_list)
+    max_time = max(_statisticer.time_list)
     step = 0.0001
     plt.yticks([y for y in np.arange(0, max_time + step, step)], fontsize=6)
     plt.gca().set_ylim([0 - step, max_time + step])
 
     # x ticks
-    max_length = max(_length_list)
+    max_length = max(_statisticer.length_list)
     plt.xticks([x for x in range(1, max_length + 2)])
 
     # mean line
-    plt.plot([x for x in range(1, max_length + 2)], [0.002] * (max_length + 1),
+    plt.plot([x for x in range(1, max_length + 2)], [_statisticer.bad_time] * (max_length + 1),
              c='green', label='fast', linestyle='--')
 
     # old average line
@@ -77,9 +76,10 @@ def plots(_length_list, _time_list):
 
     # average line
     ax, ay = zip(
-        *sorted((x, np.mean([y for a, y in zip(_length_list, _time_list) if x == a])) for x in set(_length_list)))
+        *sorted((x, np.mean([y for a, y in zip(_statisticer.length_list, _statisticer.time_list) if x == a]))
+                for x in set(_statisticer.length_list)))
     plt.plot(ax, ay, c='blue', label='average')
-    average = math.ceil(len(_length_list) / sum(_time_list))
+    average = _statisticer.get_average_speed()
     plt.annotate('average speed: ' + str(average) + ' w/s', xy=(1.5, (ay[0] + ay[1]) / 2), xytext=(1, 0.001),
                  arrowprops=dict(facecolor='blue', shrink=0.05),
                  horizontalalignment='mid', verticalalignment='mid',
@@ -96,7 +96,7 @@ def plots(_length_list, _time_list):
     plt.title("Length/number hist of purify_text execution")
     plt.xlabel("Length")
     plt.ylabel("Number")
-    plt.hist(_length_list, bins=np.arange(max_length + 1) - 0.5, color='green')
+    plt.hist(_statisticer.length_list, bins=np.arange(max_length + 1) - 0.5, color='green')
     plt.xticks([x for x in range(max_length + 1)])
     plt.xlim([0.5, max_length + 0.5])
     plt.savefig(PLOT2_PATH)
@@ -131,5 +131,5 @@ if __name__ == '__main__':
 
     # statistic
     statisticer = purifier.statisticer
-    plots(statisticer.length_list, statisticer.time_list)
+    plots(statisticer)
     statisticer.print_full_information()

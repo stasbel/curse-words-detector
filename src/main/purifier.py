@@ -234,7 +234,7 @@ class Purifier:
                 self.statisticer.count += 1
                 if tokens[ind] == self.hide_string:
                     self.statisticer.bad_count += 1
-                if this_time >= self.statisticer.bad_time:
+                if this_time > self.statisticer.bad_time:
                     self.statisticer.bottleneck_list.append(word)
 
         return ''.join(tokens)

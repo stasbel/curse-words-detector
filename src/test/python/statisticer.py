@@ -12,7 +12,7 @@ class Statisticer:
         self.edit1_list = []
         self.edit2_list = []
 
-    def get_average(self):
+    def get_average_speed(self):
         return math.ceil(len(self.length_list) / sum(self.time_list))
 
     def print_full_information(self):
