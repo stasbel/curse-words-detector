@@ -1,9 +1,10 @@
+from concurrent.futures import ThreadPoolExecutor
 from time import time
 
 from src.main.analyzer import Analyzer
+from src.main.heurister import Heurister
+from src.main.tokenizer import Tokenizer
 from src.test.python.statisticer import Statisticer
-
-from concurrent.futures import ThreadPoolExecutor
 
 # TODO как улучшить?
 # TODO 1) использовать другую структуру данных (память) есть DatTrie и CharTrie, HatTrie уже пробовал: медленней
@@ -11,11 +12,11 @@ from concurrent.futures import ThreadPoolExecutor
 # TODO 2) две вставки это много? (скорость)
 # TODO 3) частота употребления: ераном редко, ебаном чаще, можно дать матам частоту и скачать словарь частотности
 # TODO совсем редкие слова можно пропускать (точность)
-# TODO 4) Mystem? (???)
+# TODO [**DONE**] 4) Mystem? (слишком долго)
 # TODO 5) Запоминать уже посмотренные слова ? (скорость)
 # TODO 6) Предпосчитать самые популярные обыные слова, поэтому считать edit_dist2 мы будем только для самых редких слов
 # TODO c как минимум 2 ошибками, к тому же их вообще мало (точность & скорость)
-# TODO 7) Два слова подряд без пробела (точность)
+# TODO 7) Два слова подряд без пробела (точность, после вероятностей)
 # TODO 8) анализировать по 2 по три слова, списки можно взять у opencorpora (точность)
 # TODO 9) добавить современных слов и имен собственных (точность и скорость)
 
@@ -26,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 # TODO 4) code review
 # TODO 5) написать в readme подробней про алгоритм
 # TODO 6) скрыть коммиты словарей
-# TODO 7) многопоточность (1 поток = 1 слово) [result: долго, нужно другое дробление]
+# TODO [**DONE**] 7) многопоточность (1 поток = 1 слово) [result: долго, нужно другое дробление]
 
 
 """
@@ -67,7 +68,9 @@ class Purifier:
                  is_dict=None, normal_form=None,
                  alphabet=RUSSIAN_ALPHABET, replaces=REPLACES,
                  statisticer=Statisticer(),
-                 concurrency=False, workers=None):
+                 concurrency=False, workers=None,
+                 tokenizer=Tokenizer(),
+                 heurister=Heurister()):
         """
         :param path_to_vanilla: путь с словарю с плохими словами
         :param hide_symbol: на что заменяем плохое слово
@@ -76,8 +79,10 @@ class Purifier:
         :param alphabet: алфавит
         :param replaces: словарь умных замен
         :param statisticer: класс для сбора статистики
-        :param concurrency: нужна ли многопоточность (теперь будем возвращать Future)
+        :param concurrency: нужна ли многопоточность (1 поток = 1 слово)
         :param workers: количество потоков
+        :param tokenizer: класс для разбиения на слова и не слова
+        :param heurister: эвристическая замена не русских букв и больших на маленькие
         :return: новый класс
         """
 
@@ -110,6 +115,10 @@ class Purifier:
             self.thread_pool = ThreadPoolExecutor(workers)
         else:
             self.thread_pool = None
+
+        self.tokenizer = tokenizer
+
+        self.heurister = heurister
 
     @staticmethod
     def __slices__(word):
@@ -200,76 +209,64 @@ class Purifier:
 
         return self.CorrectObsceneReturnValue(word, -1)
 
-    @staticmethod
-    def __tokenize__(text):
-        result = []
-        i = 0
-        n = len(text)
-        while i < n:
-            j = i
+    def __handle_word__(self, ind, raw_word, tokens):
+        prev_time = time()
 
-            if str.isalpha(text[i]):
-                while j < n and (str.isalpha(text[j]) or str.isdigit(text[j])):
-                    j += 1
-            else:
-                while j < n and not str.isalpha(text[j]):
-                    j += 1
-            result.append(text[i:j])
+        word = self.heurister.transform_word(raw_word)
 
-            i = j
+        if self.is_bad(word):  # плохое - баним
+            tokens[ind] = self.hide_string
+        else:  # иначе нужны хорошие нормальные формы
+            normal = self.normal_form(word)
+            if self.is_dict(normal.candidates[0]):  # не работает предиктор - слово было в словаре
+                for normal_word in normal.candidates:  # на одинаковой дистанции, маты важнее обыных слов
+                    if self.is_bad(normal_word):
+                        tokens[ind] = self.hide_string
+                        break
+            else:  # изначальное слово и все его хорошие нф не в словаре матов и не в обычном словаре
+                for normal_word in normal.candidates:
+                    curse = self.__correct_obscene__(normal_word)
+                    if (0 <= curse.edit_dist <= 1) or (curse.edit_dist == 2 and len(normal_word) >= 4):
+                        tokens[ind] = self.hide_string
+                        break
 
-        return result
+        if tokens[ind] != self.hide_string:
+            tokens[ind] = raw_word
 
-    @staticmethod
-    def __word_heuristic__(word):
-        # TODO замена цифр и английских букв на русские буквы евристически
-        return word.lower()
-
-    def __handle_text__(self, text):
-        tokens = self.__tokenize__(text)
-        for ind, word in enumerate(tokens):
-            if str.isalpha(word[0]):
-                prev_time = time()
-
-                word = self.__word_heuristic__(word)
-
-                if self.is_bad(word):  # плохое - баним
-                    tokens[ind] = self.hide_string
-                else:  # иначе нужны хорошие нормальные формы
-                    normal = self.normal_form(word)
-                    if self.is_dict(normal.candidates[0]):  # не работает предиктор - слово было в словаре
-                        for normal_word in normal.candidates:  # на одинаковой дистанции, маты важнее обыных слов
-                            if self.is_bad(normal_word):
-                                tokens[ind] = self.hide_string
-                                break
-                    else:  # изначальное слово и все его хорошие нф не в словаре матов и не в обычном словаре
-                        for normal_word in normal.candidates:
-                            curse = self.__correct_obscene__(normal_word)
-                            if (0 <= curse.edit_dist <= 1) or (curse.edit_dist == 2 and len(normal_word) >= 4):
-                                tokens[ind] = self.hide_string
-                                break
-
-                this_time = float(time() - prev_time)
-                self.statisticer.time_list.append(this_time)
-                self.statisticer.length_list.append(len(word))
-                self.statisticer.count += 1
-                if tokens[ind] == self.hide_string:
-                    self.statisticer.bad_count += 1
-                if this_time > self.statisticer.bad_time:
-                    self.statisticer.bottleneck_list.append(word)
-
-        return ''.join(tokens)
+        this_time = float(time() - prev_time)
+        self.statisticer.time_list.append(this_time)
+        self.statisticer.length_list.append(len(word))
+        self.statisticer.count += 1
+        if tokens[ind] == self.hide_string:
+            self.statisticer.bad_count += 1
+        if this_time > self.statisticer.bad_time:
+            self.statisticer.bottleneck_list.append(word)
 
     def purify_text(self, text):
+        # TODO утебя = у тебя или = ут!!!ЕБЯ!!! => slicer
+
+        tokens = self.tokenizer.tokenize_text(text)
+        futures = []
+
+        for ind, (token, is_word) in enumerate(tokens):
+            if is_word:
+                if self.thread_pool:
+                    futures.append(self.thread_pool.submit(self.__handle_word__, ind, token, tokens))
+                else:
+                    self.__handle_word__(ind, token, tokens)
+            else:
+                tokens[ind] = token
+
         if self.thread_pool:
-            return self.thread_pool.submit(self.__handle_text__, text)
-        else:
-            return self.__handle_text__(text)
+            for future in futures:
+                future.result()
+
+        return ''.join(tokens)
 
 
 if __name__ == '__main__':
     purifier = Purifier('../../dicts/vanilla_bad_words.txt')
     before_time = time()
-    print(purifier.purify_text('??ах, ты че, совсем ахуела,рмазь? прасто писдец,мда!!@ ебануться, ебожить с ноги))'))
+    print(purifier.purify_text('??ах, ты че, совсем ахуела,рм@зь? прасто писдец,мда!!@ 3бануться, ебожить с ноги))'))
     now_time = time()
     print(now_time - before_time)
