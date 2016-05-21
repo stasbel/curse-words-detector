@@ -1,4 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor
 from time import time
 
 from src.main.analyzer import Analyzer
@@ -68,7 +67,6 @@ class Purifier:
                  is_dict=None, normal_form=None,
                  alphabet=RUSSIAN_ALPHABET, replaces=REPLACES,
                  statisticer=Statisticer(),
-                 concurrency=False, workers=None,
                  tokenizer=Tokenizer(),
                  heurister=Heurister()):
         """
@@ -79,8 +77,6 @@ class Purifier:
         :param alphabet: алфавит
         :param replaces: словарь умных замен
         :param statisticer: класс для сбора статистики
-        :param concurrency: нужна ли многопоточность (1 поток = 1 слово)
-        :param workers: количество потоков
         :param tokenizer: класс для разбиения на слова и не слова
         :param heurister: эвристическая замена не русских букв и больших на маленькие
         :return: новый класс
@@ -110,11 +106,6 @@ class Purifier:
                 self.normal_form = analyzer.normal_form
 
         self.statisticer = statisticer
-
-        if concurrency:
-            self.thread_pool = ThreadPoolExecutor(workers)
-        else:
-            self.thread_pool = None
 
         self.tokenizer = tokenizer
 
@@ -230,7 +221,7 @@ class Purifier:
                         tokens[ind] = self.hide_string
                         break
 
-        if tokens[ind] != self.hide_string:
+        if tokens[ind] != self.hide_string:  # если не заменяли, то возвращаем просто изначальное слово
             tokens[ind] = raw_word
 
         this_time = float(time() - prev_time)
@@ -246,20 +237,12 @@ class Purifier:
         # TODO утебя = у тебя или = ут!!!ЕБЯ!!! => slicer
 
         tokens = self.tokenizer.tokenize_text(text)
-        futures = []
 
         for ind, (token, is_word) in enumerate(tokens):
             if is_word:
-                if self.thread_pool:
-                    futures.append(self.thread_pool.submit(self.__handle_word__, ind, token, tokens))
-                else:
-                    self.__handle_word__(ind, token, tokens)
+                self.__handle_word__(ind, token, tokens)
             else:
                 tokens[ind] = token
-
-        if self.thread_pool:
-            for future in futures:
-                future.result()
 
         return ''.join(tokens)
 
