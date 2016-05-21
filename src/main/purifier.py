@@ -1,7 +1,9 @@
 from time import time
 
-from src.main.pymorph_nf import Analyzer
+from src.main.analyzer import Analyzer
 from src.test.python.statisticer import Statisticer
+
+from concurrent.futures import ThreadPoolExecutor
 
 # TODO как улучшить?
 # TODO 1) использовать другую структуру данных (память) есть DatTrie и CharTrie, HatTrie уже пробовал: медленней
@@ -23,6 +25,8 @@ from src.test.python.statisticer import Statisticer
 # TODO 3) node.js
 # TODO 4) code review
 # TODO 5) написать в readme подробней про алгоритм
+# TODO 6) скрыть коммиты словарей
+# TODO 7) многопоточность (1 поток = 1 слово) [result: долго, нужно другое дробление]
 
 
 """
@@ -62,7 +66,8 @@ class Purifier:
     def __init__(self, path_to_vanilla=None, hide_symbol='*',
                  is_dict=None, normal_form=None,
                  alphabet=RUSSIAN_ALPHABET, replaces=REPLACES,
-                 statisticer=Statisticer()):
+                 statisticer=Statisticer(),
+                 concurrency=False, workers=None):
         """
         :param path_to_vanilla: путь с словарю с плохими словами
         :param hide_symbol: на что заменяем плохое слово
@@ -71,6 +76,8 @@ class Purifier:
         :param alphabet: алфавит
         :param replaces: словарь умных замен
         :param statisticer: класс для сбора статистики
+        :param concurrency: нужна ли многопоточность (теперь будем возвращать Future)
+        :param workers: количество потоков
         :return: новый класс
         """
 
@@ -98,6 +105,11 @@ class Purifier:
                 self.normal_form = analyzer.normal_form
 
         self.statisticer = statisticer
+
+        if concurrency:
+            self.thread_pool = ThreadPoolExecutor(workers)
+        else:
+            self.thread_pool = None
 
     @staticmethod
     def __slices__(word):
@@ -213,7 +225,7 @@ class Purifier:
         # TODO замена цифр и английских букв на русские буквы евристически
         return word.lower()
 
-    def purify_text(self, text):
+    def __handle_text__(self, text):
         tokens = self.__tokenize__(text)
         for ind, word in enumerate(tokens):
             if str.isalpha(word[0]):
@@ -248,12 +260,16 @@ class Purifier:
 
         return ''.join(tokens)
 
+    def purify_text(self, text):
+        if self.thread_pool:
+            return self.thread_pool.submit(self.__handle_text__, text)
+        else:
+            return self.__handle_text__(text)
+
 
 if __name__ == '__main__':
     purifier = Purifier('../../dicts/vanilla_bad_words.txt')
     before_time = time()
     print(purifier.purify_text('??ах, ты че, совсем ахуела,рмазь? прасто писдец,мда!!@ ебануться, ебожить с ноги))'))
-    # print(purifier.purify_text('ростик шамбарова меня не жэляют это тебя жэлеют тваи видео гавно'))
-    # print(purifier.purify_text('В деньгах, блять, в тачке? \nКогда пиздатая мобила? '))
     now_time = time()
     print(now_time - before_time)
