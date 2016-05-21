@@ -5,7 +5,6 @@ from src.main.heurister import Heurister
 from src.main.tokenizer import Tokenizer
 from src.test.python.statisticer import Statisticer
 
-
 """
 :const RUSSIAN_ALPHABET: русский алфавит
 :const REPLACES: умные замены букв: рядом по клавиатуре, похоже пишутся, парные, похоже слышатся, частые ошибки
@@ -87,6 +86,8 @@ class Purifier:
         self.tokenizer = tokenizer
 
         self.heurister = heurister
+
+        self.treated = dict()
 
     @staticmethod
     def __slices__(word):
@@ -178,37 +179,48 @@ class Purifier:
         return self.CorrectObsceneReturnValue(word, -1)
 
     def __handle_word__(self, ind, raw_word, tokens):
+        # запоминаем начальное время
         prev_time = time()
 
-        word = self.heurister.transform_word(raw_word)
+        if raw_word in self.treated:  # если уже обрабатывали, что ок
+            if self.treated[raw_word]:
+                tokens[ind] = self.hide_string
+        else:
+            # приводим к нижнему регистру, заменяем английские буквы и цифры на русские
+            word = self.heurister.transform_word(raw_word)
 
-        if self.is_bad(word):  # плохое - баним
-            tokens[ind] = self.hide_string
-        else:  # иначе нужны хорошие нормальные формы
-            normal = self.normal_form(word)
-            if self.is_dict(normal.candidates[0]):  # не работает предиктор - слово было в словаре
-                for normal_word in normal.candidates:  # на одинаковой дистанции, маты важнее обыных слов
-                    if self.is_bad(normal_word):
-                        tokens[ind] = self.hide_string
-                        break
-            else:  # изначальное слово и все его хорошие нф не в словаре матов и не в обычном словаре
-                for normal_word in normal.candidates:
-                    curse = self.__correct_obscene__(normal_word)
-                    if (0 <= curse.edit_dist <= 1) or (curse.edit_dist == 2 and len(normal_word) >= 4):
-                        tokens[ind] = self.hide_string
-                        break
+            if self.is_bad(word):  # плохое - баним
+                tokens[ind] = self.hide_string
+            else:  # иначе нужны хорошие нормальные формы
+                normal = self.normal_form(word)
+                if self.is_dict(normal.candidates[0]):  # не работает предиктор - слово было в словаре
+                    for normal_word in normal.candidates:  # на одинаковой дистанции, маты важнее обыных слов
+                        if self.is_bad(normal_word):
+                            tokens[ind] = self.hide_string
+                            break
+                else:  # изначальное слово и все его хорошие нф не в словаре матов и не в обычном словаре
+                    for normal_word in normal.candidates:
+                        curse = self.__correct_obscene__(normal_word)
+                        if (0 <= curse.edit_dist <= 1) or (curse.edit_dist == 2 and len(normal_word) >= 4):
+                            tokens[ind] = self.hide_string
+                            break
 
-        if tokens[ind] != self.hide_string:  # если не заменяли, то возвращаем просто изначальное слово
+            # запоминаем
+            self.treated[raw_word] = (tokens[ind] == self.hide_string)
+
+        # если не заменяли, то возвращаем просто изначальное слово
+        if tokens[ind] != self.hide_string:
             tokens[ind] = raw_word
 
+        # статистика
         this_time = float(time() - prev_time)
         self.statisticer.time_list.append(this_time)
-        self.statisticer.length_list.append(len(word))
+        self.statisticer.length_list.append(len(raw_word))
         self.statisticer.count += 1
         if tokens[ind] == self.hide_string:
             self.statisticer.bad_count += 1
         if this_time > self.statisticer.bad_time:
-            self.statisticer.bottleneck_list.append(word)
+            self.statisticer.bottleneck_list.append(raw_word)
 
     def purify_text(self, text):
         # TODO утебя = у тебя или = ут!!!ЕБЯ!!! => slicer
