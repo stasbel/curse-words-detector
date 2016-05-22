@@ -5,7 +5,7 @@ class Tokenizer:
     def __init__(self, more_interesting_chars=MORE_INTERESTING_CHARS):
         self.more_interesting_chars = more_interesting_chars
 
-    def is_interesting(self, char):
+    def __is_interesting__(self, char):
         return str.isalnum(char) or (char in self.more_interesting_chars)
 
     def tokenize_text(self, text):
@@ -16,13 +16,13 @@ class Tokenizer:
         while i < n:
             j = i
 
-            if self.is_interesting(text[i]):
+            if self.__is_interesting__(text[i]):
                 is_word = True
-                while j < n and self.is_interesting(text[j]):
+                while j < n and self.__is_interesting__(text[j]):
                     j += 1
             else:
                 is_word = False
-                while j < n and not self.is_interesting(text[j]):
+                while j < n and not self.__is_interesting__(text[j]):
                     j += 1
             result.append((text[i:j], is_word))
 
