@@ -41,7 +41,9 @@ class Analyzer:
 
 if __name__ == '__main__':
     analyzer = Analyzer()
-    name_word = 'утебя'
+    name_word = 'бутявка'
+    print(analyzer.morph.normal_forms(name_word))
+    print(analyzer.morph.tag(name_word))
     print(analyzer.normal_form(name_word).candidates)
     print(analyzer.is_in_ruscorpra(name_word))
     for parse_var in analyzer.morph.parse(name_word):

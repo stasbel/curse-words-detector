@@ -51,4 +51,4 @@ class Heurister:
 
 if __name__ == '__main__':
     heurister = Heurister()
-    print(heurister.transform_word('п1зд@'))
+    print(heurister.transform_word('XJIE6'))
