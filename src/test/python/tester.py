@@ -25,7 +25,7 @@ def test_generator(_correct, _suspect, _purifier):
 
 
 TEST_DIR = '../resources/tests'
-DICT_PATH = '../../../dicts/vanilla_bad_words.txt'
+DICT_PATH = '../../../dicts/vanilla_bad_words.cyr.lc'
 PLOT1_PATH = '../resources/plots/length_time_plot.png'
 PLOT2_PATH = '../resources/plots/length_number_plot.png'
 STAT_PATH = '../resources/stats/restats'

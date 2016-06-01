@@ -236,7 +236,7 @@ class Purifier:
 
 
 if __name__ == '__main__':
-    purifier = Purifier('../../dicts/vanilla_bad_words.txt')
+    purifier = Purifier('../../dicts/vanilla_bad_words.cyr.lc')
     before_time = time()
     print(purifier.purify_text('??ах, ты че, совсем ахуела,рм@зь? прасто писдец,мда!!@ 3бануться, ебожить с ноги))'))
     now_time = time()
