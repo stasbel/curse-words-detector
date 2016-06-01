@@ -26,6 +26,8 @@
   numberstyle=\tiny\color{gray},
 }
 \lstset{escapechar=@,style=mycode}
+\usepackage{tcolorbox}
+\usepackage{lipsum}
 
 \newcommand{\cimg}[2]{%
 	\begin{center}%
@@ -65,16 +67,31 @@
     \end{enumerate}
 \end{frame}
 
+\section{Данные}
+\begin{frame}{Данные}
+    \begin{tcolorbox}[colback=blue!5,colframe=blue!40!black,title=Реальный пример текста]
+        всем пака с вами был данил 92 жди 12 части
+        рости шамбарова да жалуйся в групе я тебя не баюсь да пашол ты в ростик шамбарова
+        я тебя не баюсь я не буду руский учит зазазазазазазазаз
+        ростик шамбарова меня не жэляют это тебя жэлеют тваи видео
+    \end{tcolorbox}
+    \begin{itemize}
+        \item Простая лексика, много ошибок
+        \item Порядка $94\%$ слов - среди первых $5000$ в частотном списке
+        \item Много имен собственных
+    \end{itemize}
+\end{frame}
+
 \section{Архитектура проекта}
 \begin{frame}[t]{Архитектура проекта}
     Дано слово $w$, нужно найти ближайшее к нему "плохое" $c$
-    $$argmax_c ~ {P(c|w)} = argmax_c ~ {P(w|c) \frac{P(c)}{P(w)}}$$
+    $$argmax_c ~ {P(c|w)} = argmax_c ~ \left[ {P(w|c) \frac{P(c)}{P(w)}} \right]$$
     \begin{enumerate}
         \item $P(c)$ - "how likely is c to appear in text?"
             \begin{itemize}
                 \item частотные списки взял у opencorpora
             \end{itemize}
-        \item $P(w)$ - "same for every c"
+        \item $P(w)$ - константа
         \item $P(w|c)$ - вероятность того, что автор написал $w$, подразумевая $c$
             \begin{itemize}
                 \item edit distance $\leqslant 2$
@@ -95,7 +112,7 @@
 \section{Результаты}
 \begin{frame}[t]{Результаты}
     \begin{center}
-        \includegraphics[width=0.74\linewidth]{length_time_plot.png}
+        \includegraphics[width=0.74\linewidth]{../src/test/resources/plots/length_time_plot.png}
     \end{center}
 \end{frame}
 
